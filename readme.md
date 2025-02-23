@@ -73,4 +73,15 @@ node a11y_audit.js www.example.com www.websitetotest.com
 
 - In this mode, the program will ignore `sites.json` and `local_pages` folder.
 
-### Customize Audit Level and Roles
+## Configuration
+```sh
+- Report Directory: [reports](./reports)
+- Local Pages Directory: [local_pages](./local_pages)
+- Sites File: [sites.json](./sites.json)
+- Timeout: 15000 milliseconds
+```
+
+## Contact
+- **Author**: Łukasz Krause
+- **Email**: lukaszgd@gmail.com
+- **LinkedIn**: [Łukasz Krause](https://www.linkedin.com/in/lukasz-krause/)
