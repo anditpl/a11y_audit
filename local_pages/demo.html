@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Intentionally missing meta viewport for violation -->
+  <title>WCAG Accessibility Issues Demo</title>
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <!-- 1. Button with no discernible text (Violation: 4.1.2) -->
+  <button></button>
+
+  <!-- 2. Low contrast text (Violation: 1.4.3) -->
+  <p class="low-contrast">Low contrast text that is hard to read.</p>
+
+  <!-- 3. Informative image missing alternative text (Violation: 1.1.1) -->
+  <img src="example.jpg" height="200" width="200">
+
+  <!-- 4. Form inputs without associated labels (Violation: 4.1.2) -->
+  <form>
+    <input type="text" placeholder="Enter your name">
+    <input type="password" placeholder="Password">
+    <button type="submit">Submit</button>
+  </form>
+
+  <!-- 5. Link with no discernible text (Violation: 2.4.4 & 4.1.2) -->
+  <a href="#"></a>
+
+  <!-- 6. Content not contained within proper landmarks (Best practice) -->
+  <div>
+    <h1>Page Content Without Landmark</h1>
+    <p>This content should be wrapped in a landmark element such as <code>&lt;main&gt;</code> or <code>&lt;section&gt;</code>.</p>
+  </div>
+
+  <!-- 7. Small touch target size (Violation: 2.5.5) -->
+  <button class="small-button">X</button>
+
+  <!-- 8. Information conveyed by color only (Violation: 1.4.1) -->
+  <a href="https://www.example.com">www.example.com</a>
+
+  <!-- 9. Non-semantic heading usage (Violation: Using a <div> instead of a proper heading element) -->
+  <div class="heading">Section Title</div>
+  <p>Content under a non-semantic heading.</p>
+
+  <!-- 10. Data table without header cells (Violation: 1.3.1) -->
+  <table>
+    <tr>
+      <td>Item</td>
+      <td>Price</td>
+    </tr>
+    <tr>
+      <td>Product 1</td>
+      <td>$10</td>
+    </tr>
+  </table>
+
+  <!-- Additional navigation example (optional) -->
+  <nav>
+    <a href="#">Home</a>
+    <a href="#">About</a>
+    <a href="#">Contact</a>
+  </nav>
+</body>
+</html>

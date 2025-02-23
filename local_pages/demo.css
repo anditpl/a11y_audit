@@ -1,0 +1,45 @@
+/* 2. Low contrast text (WCAG AA) */
+.low-contrast {
+  color: #e0e0e0;
+  background-color: #ffffff;
+  padding: 10px;
+}
+
+/* 7. Small touch target size (WCAG AA) */
+.small-button {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+}
+
+/* 8. Color-only information: using only color to indicate link (Violation of 1.4.1) */
+a {
+  color: blue;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+/* 9. Non-semantic heading styling */
+.heading {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* Optional additional styling to visually separate sections */
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  line-height: 1.6;
+}
+
+table {
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+table, td {
+  border: 1px solid #333;
+  padding: 8px;
+}
