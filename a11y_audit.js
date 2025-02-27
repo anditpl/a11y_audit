@@ -54,7 +54,7 @@ const REPORT_DIR = path.resolve(__dirname, 'reports');
 const LOCAL_PAGES_DIR = path.resolve(__dirname, 'local_pages');
 const SITES_FILE = path.resolve(__dirname, 'sites.json');
 const TIPS_FILE = path.resolve(__dirname, 'tips.json');
-const TIMEOUT = 15000;
+const TIMEOUT = 30000;
 
 // WCAG Levels Map
 const WCAG_LEVELS = {
@@ -421,7 +421,7 @@ async function generatePdfReport(summaries, totalDuration) {
 async function displayWelcomeMessage() {
   console.log(`\n${chalk.bold.green('🚀 Welcome to the Accessibility Audit Automation Program.')}`);
   await displayRandomTip();
-  console.log(`\n${chalk.bold('📝 This tool audits website accessibility based on WCAG guidelines and generates reports in HTML and JSON formats.')}`);
+  console.log(`\n${chalk.bold('📝 This tool audits website accessibility based on WCAG guidelines and generates reports in HTML and JSON formats.\n')}`);
   console.log(`${chalk.bold('ℹ️  Important:')} Automated accessibility testing should be treated as a complementary step.`);
   console.log(`${chalk.bold('ℹ️  Manual testing remains essential for accessibility testing.')}`);
   console.log(`\n${chalk.bold('📧 Contact:')} lukaszgd@gmail.com | ${chalk.bold('LinkedIn:')} https://www.linkedin.com/in/lukasz-krause/\n`);
@@ -457,8 +457,20 @@ async function displayWelcomeMessage() {
     console.log('⭐ Level AAA - Includes Levels A and AA, offering the highest standard of accessibility.\n');
     logSeparator();
     logInfo('Note: Level AA is mandated by the European Accessibility Act.\n');
+    
+    // Prompt for audit level
     const levelInput = prompt(chalk.bold('⭐ Enter the audit level (A/AA/AAA): ')).trim();
-    const wcagTags = getWcagTags(levelInput);
+    let wcagTags = getWcagTags(levelInput);
+    
+    // Now ask if user wants to include "best-practice" rules
+    const bestPracticeInput = prompt(chalk.bold('⭐ Do you want to include best-practice rules? (yes/no): ')).trim().toLowerCase();
+    if (bestPracticeInput === 'no') {
+      const index = wcagTags.indexOf('best-practice');
+      if (index !== -1) {
+        wcagTags.splice(index, 1);
+      }
+    }
+    
     // Display available roles link before prompting for role inputs
     console.log('\nFor a full list of available roles, visit: https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md');
     const roleInputRaw = prompt(chalk.bold('🎯 Enter specific audit roles (comma-separated) or press Enter for a complete audit: ')).trim();
