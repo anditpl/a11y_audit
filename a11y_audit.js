@@ -21,8 +21,11 @@
  * - Reports generated in HTML and JSON formats.
  * - Each WCAG level includes the "best-practice" tag for comprehensive audits.
  *
+ * - Optional screenshot capture: Taking a screenshot with highlighted violations is optional.
+ *   Please note that the screenshot capture functionality may not work correctly in some pages.
+ *
  * Additional Information:
- * - If accessibility violations are detected, a screenshot with highlighted elements 
+ * - If accessibility violations are detected and screenshot capture is enabled, a screenshot with highlighted elements
  *   (using a red outline) will be taken. This screenshot is saved in JPG format to reduce file size.
  *
  * - You can also run the program by providing one or more website URLs as command-line arguments.
@@ -31,6 +34,8 @@
  *
  * - Additionally, a combined PDF report summarizing all tests will be generated,
  *   containing the most important information for each audited site, including a list of detected violations.
+ *
+ * ⚠️ Disclaimer: The screenshot capture functionality is experimental and may not work as expected in all environments.
  *
  * 📝 Author: Łukasz Krause
  * 📧 Email: lukaszgd@gmail.com
@@ -271,7 +276,7 @@ async function highlightViolations(page, axeResults, screenshotPath, legendPath)
 }
 
 // Run accessibility audit for a single site with improved log formatting
-async function runAuditForSite(site, wcagTags, roleInputs, browser) {
+async function runAuditForSite(site, wcagTags, roleInputs, includeScreenshot, browser) {
   const startTime = Date.now();
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -301,20 +306,23 @@ async function runAuditForSite(site, wcagTags, roleInputs, browser) {
       }
       return originalStdoutWrite(chunk, encoding, callback);
     };
-
     const htmlReportContent = createHtmlReport({ results: { violations: results.violations } });
     process.stdout.write = originalStdoutWrite;
 
     await fs.writeFile(htmlReportPath, htmlReportContent);
     await fs.writeFile(jsonReportPath, JSON.stringify(results, null, 2));
 
-    // If violations are detected, highlight them with a numbered screenshot and generate a legend
+    // If violations are detected, optionally highlight them with a numbered screenshot and generate a legend
     if (results.violations.length > 0) {
-      const screenshotPath = path.join(REPORT_DIR, `${siteName}_${timestamp}_highlight.jpg`);
-      const legendPath = path.join(REPORT_DIR, `${siteName}_${timestamp}_legend.txt`);
-      await highlightViolations(page, results, screenshotPath, legendPath);
-      logInfo(`📸 Screenshot saved: ${chalk.underline(screenshotPath)}`);
-      logInfo(`📄 Legend saved: ${chalk.underline(legendPath)}`);
+      if (includeScreenshot) {
+        const screenshotPath = path.join(REPORT_DIR, `${siteName}_${timestamp}_highlight.jpg`);
+        const legendPath = path.join(REPORT_DIR, `${siteName}_${timestamp}_legend.txt`);
+        await highlightViolations(page, results, screenshotPath, legendPath);
+        logInfo(`📸 Screenshot saved: ${chalk.underline(screenshotPath)}`);
+        logInfo(`📄 Legend saved: ${chalk.underline(legendPath)}`);
+      } else {
+        logInfo("📸 Screenshot capture skipped as per configuration.");
+      }
     }
 
     // Build violation list summary (each violation with id and description)
@@ -346,16 +354,7 @@ async function runAuditForSite(site, wcagTags, roleInputs, browser) {
     logSeparator();
 
     // Return summary object including the violation list
-    return {
-      site,
-      siteName,
-      totalViolations,
-      distinctAreas,
-      duration: parseFloat(duration),
-      htmlReportPath,
-      jsonReportPath,
-      violationList
-    };
+    return { site, siteName, totalViolations, distinctAreas, duration: parseFloat(duration), htmlReportPath, jsonReportPath, violationList };
   } catch (error) {
     logError(`❗ Error auditing ${site}: ${error.message}`);
     return { duration: 0 };
@@ -394,7 +393,7 @@ async function generatePdfReport(summaries, totalDuration) {
       doc.moveDown(0.5);
       doc.fontSize(12).fillColor('black').text('Violations:', { underline: true });
       doc.moveDown(0.25);
-      // Append the violation list
+      // Append the violation list if available
       if (summary.violationList) {
         doc.fontSize(10).text(summary.violationList);
       } else {
@@ -427,7 +426,6 @@ async function displayWelcomeMessage() {
   console.log(`\n${chalk.bold('📧 Contact:')} lukaszgd@gmail.com | ${chalk.bold('LinkedIn:')} https://www.linkedin.com/in/lukasz-krause/\n`);
 }
 
-// Main asynchronous function
 (async () => {
   try {
     await displayWelcomeMessage();
@@ -443,7 +441,6 @@ async function displayWelcomeMessage() {
       // Otherwise, load sites from files
       sites = await loadSites();
     }
-
     if (sites.length === 0) {
       logWarning('❗ No sites found for auditing.');
       return;
@@ -451,18 +448,19 @@ async function displayWelcomeMessage() {
     logInfo('📁 Detected sites for auditing:');
     console.log(sites.join(', '));
     sites = sites.map(normalizeUrl);
+
     console.log('\n📚 WCAG Levels Explanation:');
     console.log('⭐ Level A - Basic accessibility requirements.');
     console.log('⭐ Level AA - Includes Level A and addresses more complex accessibility barriers.');
     console.log('⭐ Level AAA - Includes Levels A and AA, offering the highest standard of accessibility.\n');
     logSeparator();
     logInfo('Note: Level AA is mandated by the European Accessibility Act.\n');
-    
+
     // Prompt for audit level
     const levelInput = prompt(chalk.bold('⭐ Enter the audit level (A/AA/AAA): ')).trim();
     let wcagTags = getWcagTags(levelInput);
-    
-    // Now ask if user wants to include "best-practice" rules
+
+    // Ask if user wants to include "best-practice" rules
     const bestPracticeInput = prompt(chalk.bold('⭐ Do you want to include best-practice rules? (yes/no): ')).trim().toLowerCase();
     if (bestPracticeInput === 'no') {
       const index = wcagTags.indexOf('best-practice');
@@ -470,7 +468,7 @@ async function displayWelcomeMessage() {
         wcagTags.splice(index, 1);
       }
     }
-    
+
     // Display available roles link before prompting for role inputs
     console.log('\nFor a full list of available roles, visit: https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md');
     const roleInputRaw = prompt(chalk.bold('🎯 Enter specific audit roles (comma-separated) or press Enter for a complete audit: ')).trim();
@@ -478,9 +476,19 @@ async function displayWelcomeMessage() {
     if (roleInputs.length > 0) {
       logInfo(`\n🛠️ Specific roles for audit: ${roleInputs.join(', ')}`);
     }
+
+    // Prompt for screenshot capture option
+    console.log('\nℹ️  Please note that the screenshot capture functionality may not work correctly in some pages.');
+    const screenshotInput = prompt(chalk.bold('📸 Do you want to capture a screenshot of violations? (yes/no): ')).trim().toLowerCase();
+    const includeScreenshot = screenshotInput === 'yes';
+    if (!includeScreenshot) {
+      logInfo("📸 Screenshot capture has been disabled.");
+    }
+
     const browser = await chromium.launch({ headless: true });
+
     // Run audits for each site and collect summaries
-    const auditPromises = sites.map(site => runAuditForSite(site, wcagTags, roleInputs, browser));
+    const auditPromises = sites.map(site => runAuditForSite(site, wcagTags, roleInputs, includeScreenshot, browser));
     const auditResults = await Promise.allSettled(auditPromises);
     let totalDuration = 0;
     const auditSummaries = [];
